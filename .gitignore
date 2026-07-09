@@ -1,0 +1,31 @@
+# Dependencies
+/node_modules
+npm-debug.log*
+yarn-error.log*
+
+# Build output
+/dist
+/build
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs
+*.log
+
+# Coverage / test output
+/coverage
+/.nyc_output
+
+# IDE / OS
+.idea
+.vscode
+*.swp
+.DS_Store
+
+# Postgres data volume (if bind-mounted)
+/pgdata
