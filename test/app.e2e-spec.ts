@@ -88,4 +88,28 @@ describe('Auth flow (e2e)', () => {
   it('blocks protected routes without a token', async () => {
     await request(app.getHttpServer()).get('/api/services').expect(401);
   });
+
+  it('rotates refresh tokens: an old token is rejected after refresh', async () => {
+    const login = await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({ email, password })
+      .expect(200);
+    const oldRefresh = (login.body as TokenResponse).refreshToken;
+
+    // JWTs signed within the same second are byte-identical (same payload +
+    // iat/exp), so wait >1s to guarantee the refresh mints a distinct token.
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+
+    // Use it once — this rotates the stored hash to a new token.
+    await request(app.getHttpServer())
+      .post('/api/auth/refresh')
+      .send({ refreshToken: oldRefresh })
+      .expect(200);
+
+    // Replaying the now-rotated-out token must be rejected.
+    await request(app.getHttpServer())
+      .post('/api/auth/refresh')
+      .send({ refreshToken: oldRefresh })
+      .expect(401);
+  });
 });

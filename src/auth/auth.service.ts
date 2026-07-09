@@ -6,6 +6,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { createHash } from 'crypto';
 import { UsersService } from '../users/users.service';
 import { User } from '../users/user.entity';
 import { JwtPayload } from './strategies/jwt.strategy';
@@ -56,11 +57,24 @@ export class AuthService {
     if (!user || !user.refreshTokenHash) {
       throw new UnauthorizedException('Refresh token is no longer valid.');
     }
-    const matches = await bcrypt.compare(presentedToken, user.refreshTokenHash);
+    const matches = await bcrypt.compare(
+      this.digest(presentedToken),
+      user.refreshTokenHash,
+    );
     if (!matches) {
       throw new UnauthorizedException('Refresh token is no longer valid.');
     }
     return this.issueTokens(user);
+  }
+
+  /**
+   * SHA-256 digest of a token before bcrypt. bcrypt only hashes the first 72
+   * bytes, and two JWTs for the same user share an identical 72-byte prefix
+   * (header + `sub`); digesting first preserves full-token entropy so token
+   * rotation and revocation actually take effect.
+   */
+  private digest(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
   }
 
   private async issueTokens(user: User): Promise<AuthTokens> {
@@ -85,7 +99,10 @@ export class AuthService {
       refreshOptions,
     );
 
-    const refreshTokenHash = await bcrypt.hash(refreshToken, BCRYPT_ROUNDS);
+    const refreshTokenHash = await bcrypt.hash(
+      this.digest(refreshToken),
+      BCRYPT_ROUNDS,
+    );
     await this.usersService.setRefreshTokenHash(user.id, refreshTokenHash);
 
     return { accessToken, refreshToken };
