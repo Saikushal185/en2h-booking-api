@@ -193,6 +193,16 @@ curl -X POST http://localhost:3000/api/bookings \
   -d '{"customerName":"John","customerEmail":"john@x.com","customerPhone":"+15551234567","serviceId":"<serviceId>","bookingDate":"2026-08-01","bookingTime":"14:30"}'
 ```
 
+## Screenshots
+
+**Swagger UI — API overview** (all endpoints grouped by tag; 🔒 marks JWT-protected routes):
+
+![Swagger UI overview](docs/screenshots/swagger-overview.png)
+
+**Swagger UI — Create Booking** (public endpoint with an example request body and "Try it out"):
+
+![Create booking in Swagger UI](docs/screenshots/swagger-create-booking.png)
+
 ## Assumptions Made
 
 - **Any authenticated user** may manage all services and bookings (no separate
